@@ -1,4 +1,4 @@
-#!/Users/gaabycasstro10/Desktop/FERCHO/TESIS/weatherTasks/env/bin/python
+#!/Users/algorhythm/Algorhythm/weatherTasks/env/bin/python
 
 # Author: 
 # Contact: grubert@users.sf.net

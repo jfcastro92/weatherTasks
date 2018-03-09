@@ -3,26 +3,29 @@
 Python Aplication Template
 Licence: GPLv3
 """
-
+import os
+import sys
+import datetime
 from flask import Flask
 from flask_mongoengine import MongoEngine
 from flask_mongorest import MongoRest
-from flask.ext.pymongo import PyMongo
-from flask.ext.login import LoginManager
+
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../../')))
 
 app = Flask(__name__)
 
-#Configuration of application, see configuration.py, choose one and uncomment.
-#app.config.from_object('configuration.ProductionConfig')
-app.config.from_object('app.configuration.DevelopmentConfig')
-#app.config.from_object('configuration.TestingConfig')
+# Esto lo mejor seria traerlo de un archivo de config, pero por ahora lo podemos dejar así
+app.config.update(
+    DEBUG = True,
+    TESTING = True,
+    MONGODB_SETTINGS = {
+        'HOST': 'localhost',
+        'PORT': 27017,
+        'DB': 'test',
+        'TZ_AWARE': False,
+    },
+)
 
-#bs = Bootstrap(app) #flask-bootstrap
-#db = SQLAlchemy(app) #flask-sqlalchemy
-
-#lm = LoginManager()
-#lm.setup_app(app)
-#lm.login_view = 'login'
 
 db = MongoEngine(app)
 api = MongoRest(app)
