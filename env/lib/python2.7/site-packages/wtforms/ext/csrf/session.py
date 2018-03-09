@@ -25,6 +25,7 @@ from .form import SecureForm
 
 __all__ = ('SessionSecureForm', )
 
+
 class SessionSecureForm(SecureForm):
     TIME_FORMAT = '%Y%m%d%H%M%S'
     TIME_LIMIT = timedelta(minutes=30)
@@ -49,7 +50,7 @@ class SessionSecureForm(SecureForm):
             expires = ''
             csrf_build = session['csrf']
 
-        hmac_csrf = hmac.new(self.SECRET_KEY, csrf_build.encode('utf8'), digestmod=sha1) 
+        hmac_csrf = hmac.new(self.SECRET_KEY, csrf_build.encode('utf8'), digestmod=sha1)
         return '%s##%s' % (expires, hmac_csrf.hexdigest())
 
     def validate_csrf_token(self, field):
