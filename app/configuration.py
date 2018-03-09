@@ -10,7 +10,7 @@ class Config(object):
 	"""
 	DEBUG = False
 	TESTING = False
-	DATABASE_URI = 'sqlite:///application.db'
+	DATABASE_URI = 'localhost:27017///weatherTasks'
 	BOOTSTRAP_FONTAWESOME = True
 	SECRET_KEY = "MINHACHAVESECRETA"
 	CSRF_ENABLED = True
@@ -20,7 +20,7 @@ class Config(object):
 	#RECAPTCHA_PRIVATE_KEY = "6LffFNwSAAAAAO7UURCGI7qQ811SOSZlgU69rvv7"
 
 class ProductionConfig(Config):
-	DATABASE_URI = 'mysql://user@localhost/foo'
+	DATABASE_URI = 'localhost:27017///weatherTasks'
 
 class DevelopmentConfig(Config):
 	DEBUG = True
