@@ -1,192 +1,93 @@
-#Modules and libraries include
-from mongoengine import *
-import datetime
-from flask import Flask
-from flask_mongoengine import MongoEngine
-from flask_mongorest import MongoRest
-from flask_mongorest.views import ResourceView
-from flask_mongorest.resources import Resource
-from flask_mongorest import operators as ops
-from flask_mongorest import methods
+# -*- coding: utf-8 -*-
 import os
+import sys
+import datetime
+import flask
 
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../../')))
 
-#MONGODB Software Database Connection
-app.config.update(
-    MONGODB_HOST = 'localhost',
-    MONGODB_PORT = 27017,
-    MONGODB_DB = 'weatherTasks',
-)
+from flask_mongoengine import MongoEngine
+# from flask_debugtoolbar import DebugToolbarExtension
 
-db = MongoEngine(app)
-api = MongoRest(app)
+app = flask.Flask(__name__)
+app.config.from_object(__name__)
+app.config['MONGODB_SETTINGS'] = {'DB': 'testing'}
+app.config['TESTING'] = True
+app.config['SECRET_KEY'] = 'flask+mongoengine=<3'
+app.debug = True
+#app.config['DEBUG_TB_PANELS'] = (
+#    'flask_debugtoolbar.panels.versions.VersionDebugPanel',
+#    'flask_debugtoolbar.panels.timer.TimerDebugPanel',
+#    'flask_debugtoolbar.panels.headers.HeaderDebugPanel',
+#    'flask_debugtoolbar.panels.request_vars.RequestVarsDebugPanel',
+#    'flask_debugtoolbar.panels.template.TemplateDebugPanel',
+#    'flask_debugtoolbar.panels.logger.LoggingPanel',
+#    'flask_mongoengine.panels.MongoDebugPanel'
+#)
 
-#Database Models definitions
+#app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+
+db = MongoEngine()
+db.init_app(app)
+
+# DebugToolbarExtension(app)
 
 #Terrain Data Collection Definitions
 class Terrain(db.Document):
-	name = db.StringField(max_length=30, required=True)
-	description = db.StringField(max_length=50, required=False)
-	height = db.FloatField(required=True)
-	width = db.FloatField (required=True)
+    name = db.StringField(max_length=30, required=True)
+    description = db.StringField(max_length=50, required=False)
+    height = db.FloatField(required=True)
+    width = db.FloatField(required=True)
 
-class TerrainResource(Resource):
-    document = Terrain
 
 #Variables Data Collection Definitions
 class Variable(db.Document):
-	name = db.StringField(max_length=30, required=True)
-	min_value = db.FloatField()
-	max_value = db.FloatField()
-	unit = db.StringField(max_length=5, required=True)
-
-class VariableResource(Resource):
-    document = Variable
+    name = db.StringField(max_length=30, required=True)
+    min_value = db.FloatField()
+    max_value = db.FloatField()
+    unit = db.StringField(max_length=5, required=True)
 
 #SystemParameter Data Collection Definitions
-class SystemParameter():
-	name = db.StringField(max_length=30, required=True)
-
-class SystemParameterResource(Resource):
-    document = SystemParameter
+class SystemParameter(db.Document):
+    name = db.StringField(max_length=30, required=True)
 
 #Sensor Data Collection Definitions
 class Sensor(db.Document):
-	name = db.StringField(max_length=30, required=True, unique=True)
-	description = db.StringField(max_length=50, required=False)
-	state = db.BooleanField(default=False, required=False)
-	terrain_object = db.ReferenceField(Terrain)
-
-class SensorResource(Resource):
-    document = Sensor
+    name = db.StringField(max_length=30, required=True, unique=True)
+    description = db.StringField(max_length=50, required=False)
+    state = db.BooleanField(default=False, required=False)
+    terrain_object = db.ReferenceField(Terrain)
 
 #Data Collection Definitions
 class Data(db.Document):
-	sensor_object = db.ReferenceField(Sensor)
-	variable_type = db.ReferenceField(Variable)
-	data = db.FloatField(required=True)
-	value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
-
-class DataResource(Resource):
-    document = Data
+    sensor_object = db.ReferenceField(Sensor)
+    variable_type = db.ReferenceField(Variable)
+    data = db.FloatField(required=True)
+    value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
 
 #WeatherData Data Collection Definitions
 class WeatherData(db.Document):
-	value = db.FloatField(required=True)
-	value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
-	variable_type = db.ReferenceField(Variable)
-
-class WeatherDataResource(Resource):
-    document = WeatherData
+    value = db.FloatField(required=True)
+    value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
+    variable_type = db.ReferenceField(Variable)
 
 #Alert Data Collection Definitions
 class Alert(db.Document):
-	alert_type = db.StringField(max_length=30, required=True)
-	description = db.StringField(max_length=100)
-	terrain_object = db.ReferenceField(Terrain)
-	sensor_object = db.ReferenceField(Sensor)
-
-class AlertResource(Resource):
-    document = Alert
+    alert_type = db.StringField(max_length=30, required=True)
+    description = db.StringField(max_length=100)
+    terrain_object = db.ReferenceField(Terrain)
+    sensor_object = db.ReferenceField(Sensor)
 
 
-#Resources Definitions
-class TerrainResources(Resource):
-    document = Terrain
-    related_resources = {
-        'content': TerrainResource,
-    }
-    filters = {
-        'name': [ops.Exact, ops.Startswith]
-    }
+@app.route('/')
+def index():
+    # As a list to test debug toolbar
+    # Todo.objects().delete()  # Removes
+    # Todo(title="Simple todo A ПЫЩЬ!", text="12345678910").save()  # Insert
+    # Todo(title="Simple todo B", text="12345678910").save()  # Insert
+    # Todo.objects(title__contains="B").update(set__text="Hello world")  # Update
+    # todos = Todo.objects.all()
+    return 'Hi'
 
-class VariableResources(Resource):
-    document = Variable
-    related_resources = {
-        'content': VariableResource,
-    }
-    filters = {
-        'name': [ops.Exact, ops.Startswith]
-    }
-
-class SystemParameterResources(Resource):
-    document = SystemParameter
-    related_resources = {
-        'content': SystemParameterResource,
-    }
-    filters = {
-        'name': [ops.Exact, ops.Startswith]
-    }
-
-class SensorResources(Resource):
-    document = Sensor
-    related_resources = {
-        'content': SensorResource,
-    }
-    filters = {
-        'name': [ops.Exact, ops.Startswith]
-    }
-
-class DataResources(Resource):
-    document = Data
-    related_resources = {
-        'content': DataResource,
-    }
-    filters = {
-        'name': [ops.Exact, ops.Startswith]
-    }
-
-class WeatherDataResources(Resource):
-    document = WeatherData
-    related_resources = {
-        'content': WeatherDataResource,
-    }
-    filters = {
-        'name': [ops.Exact, ops.Startswith]
-    }
-
-class AlertResources(Resource):
-    document = Alert
-    related_resources = {
-        'content': AlertResource,
-    }
-    filters = {
-        'name': [ops.Exact, ops.Startswith]
-    }
-
-#API REST Definitions for each data collection (CRUD)
-@api.register(name='terrain', url='/terrain/')
-class TerrainView(ResourceView):
-    resource = TerrainResources
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
-
-@api.register(name='variable', url='/variable/')
-class VariableView(ResourceView):
-    resource = VariableResources
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
-
-@api.register(name='sysp', url='/sysp/')
-class SystemParameterView(ResourceView):
-    resource = SystemParameterResources
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
-
-@api.register(name='sensor', url='/sensor/')
-class SensorView(ResourceView):
-    resource = SensorResources
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
-
-@api.register(name='data', url='/data/')
-class DataView(ResourceView):
-    resource = DataResources
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
-
-@api.register(name='weatherd', url='/weatherd/')
-class DataView(ResourceView):
-    resource = WeatherDataResources
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
-
-@api.register(name='alert', url='/alert/')
-class DataView(ResourceView):
-    resource = AlertResources
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
-
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=4000)

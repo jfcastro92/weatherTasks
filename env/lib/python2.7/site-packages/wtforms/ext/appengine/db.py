@@ -149,7 +149,8 @@ def convert_DateTimeProperty(model, prop, kwargs):
     if prop.auto_now or prop.auto_now_add:
         return None
 
-    return f.DateTimeField(format='%Y-%m-%d %H:%M:%S', **kwargs)
+    kwargs.setdefault('format', '%Y-%m-%d %H:%M:%S')
+    return f.DateTimeField(**kwargs)
 
 
 def convert_DateProperty(model, prop, kwargs):
@@ -157,7 +158,8 @@ def convert_DateProperty(model, prop, kwargs):
     if prop.auto_now or prop.auto_now_add:
         return None
 
-    return f.DateField(format='%Y-%m-%d', **kwargs)
+    kwargs.setdefault('format', '%Y-%m-%d')
+    return f.DateField(**kwargs)
 
 
 def convert_TimeProperty(model, prop, kwargs):
@@ -165,7 +167,8 @@ def convert_TimeProperty(model, prop, kwargs):
     if prop.auto_now or prop.auto_now_add:
         return None
 
-    return f.DateTimeField(format='%H:%M:%S', **kwargs)
+    kwargs.setdefault('format', '%H:%M:%S')
+    return f.DateTimeField(**kwargs)
 
 
 def convert_ListProperty(model, prop, kwargs):
@@ -373,8 +376,9 @@ class ModelConverter(object):
             kwargs['validators'].append(validators.required())
 
         if prop.choices:
-            # Use choices in a select field.
-            kwargs['choices'] = [(v, v) for v in prop.choices]
+            # Use choices in a select field if it was not provided in field_args
+            if 'choices' not in kwargs:
+                kwargs['choices'] = [(v, v) for v in prop.choices]
             return f.SelectField(**kwargs)
         else:
             converter = self.converters.get(prop_type_name, None)
