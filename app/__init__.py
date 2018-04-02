@@ -15,6 +15,9 @@ from flask_mongorest.resources import Resource
 from flask_mongorest import operators as ops
 from flask_mongorest import methods
 
+from flask import Flask
+from flask_mqtt import Mqtt
+
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../../')))
 
 app = Flask(__name__)
@@ -30,6 +33,17 @@ app.config.update(
         'TZ_AWARE': False,
     },
 )
+
+# app.config['MQTT_BROKER_URL'] = 'localhost'
+# app.config['MQTT_BROKER_PORT'] = 1883
+# app.config['MQTT_USERNAME'] = 'admin'
+# app.config['MQTT_PASSWORD'] = 'admin'
+# app.config['MQTT_REFRESH_TIME'] = 1.0  # refresh time in seconds
+
+
+# mqtt = Mqtt(app)
+
+
 db = MongoEngine(app)
 api = MongoRest(app)
 
