@@ -34,14 +34,15 @@ app.config.update(
     },
 )
 
-# app.config['MQTT_BROKER_URL'] = 'localhost'
-# app.config['MQTT_BROKER_PORT'] = 1883
-# app.config['MQTT_USERNAME'] = 'admin'
-# app.config['MQTT_PASSWORD'] = 'admin'
-# app.config['MQTT_REFRESH_TIME'] = 1.0  # refresh time in seconds
+app.config['MQTT_BROKER_URL'] = 'localhost'  # use the free broker from HIVEMQ
+app.config['MQTT_BROKER_PORT'] = 1883  # default port for non-tls connection
+app.config['MQTT_USERNAME'] = ''  # set the username here if you need authentication for the broker
+app.config['MQTT_PASSWORD'] = ''  # set the password here if the broker demands authentication
+app.config['MQTT_KEEPALIVE'] = 5  # set the time interval for sending a ping to the broker to 5 seconds
+app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled for testing purposes
 
 
-# mqtt = Mqtt(app)
+mqtt = Mqtt(app)
 
 
 db = MongoEngine(app)
@@ -125,7 +126,7 @@ class SensorView(ResourceView):
 
 @api.register(name='data', url='/data/')
 class DataView(ResourceView):
-    resource = SensorResource
+    resource = DataResource
     methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
 
 @api.register(name='wdata', url='/wdata/')
@@ -139,3 +140,21 @@ class AlertView(ResourceView):
     methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
 
 
+
+#MQTT Methods Handler
+
+@mqtt.on_connect()
+def handle_connect(client, userdata, flags, rc):
+    mqtt.subscribe('sensor1/temp')
+
+@mqtt.on_message()
+def handle_mqtt_message(client, userdata, message):
+    data = dict(
+        topic=message.topic,
+        payload=message.payload.decode()
+    )
+
+    #Store Data from sensor into mongoDB collections
+    data = [str(Sensor.objects(name=str(data["topic"]).split("/")[0])[0].id), str(Variable.objects(name=str(data["topic"]).split("/")[1])[0].id), str(data["payload"])]
+    Data(sensor_object= data[0], variable_type= data[1], data=data[2]).save()
+   
