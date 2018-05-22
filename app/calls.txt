@@ -1,0 +1,17 @@
+curl -H "Content-Type: application/json" -X POST -d \
+'{"title": "First post!", "author_id": "author_id_from_a_previous_api_call", "content": {"text": "this is our test post content"}}' http://0.0.0.0:5000/posts/
+{
+  "id": "1",
+  "title": "First post!",
+  "author_id": "author_id_from_a_previous_api_call",
+  "content": {
+    "text": "this is our test post content"
+  }
+} 
+
+
+curl -H "Content-Type: application/json" -X POST -d \
+'{"name": "sensor1", "description": "sensor de pruebas mqtt", "state": "1", "terrain_object": "5aa2fd40dc5f564d36ca82b5"}' http://0.0.0.0:4000/sensor/
+
+curl -H "Content-Type: application/json" -X POST -d \
+'{"name": "temp", "min_value": "11.0", "max_value": "31.0", "unit": "C"}' http://0.0.0.0:4003/variable/
