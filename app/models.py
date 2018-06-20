@@ -42,13 +42,22 @@ class Data(db.Document):
 
 #WeatherData Data Collection Definitions
 class WeatherData(db.Document):
-    value = db.FloatField(required=True)
-    value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
-    variable_type = db.ReferenceField(Variable)
+    temp = db.FloatField(required=True)
+    temp_min = db.FloatField(required=True)
+    temp_max = db.FloatField(required=True)
+    pressure = db.FloatField(required=True)
+    humidity = db.FloatField(required=True)
+    main = db.StringField(max_length=50, required=True)
+    description = db.StringField(max_length=50, required=True)
+    clouds = db.StringField(max_length=4, required=True)
+    wind = db.FloatField(required=True)
+    dt_txt = db.DateTimeField()
 
 #Alert Data Collection Definitions
 class Alert(db.Document):
     alert_type = db.StringField(max_length=30, required=True)
+    data = db.FloatField(required=True)
     description = db.StringField(max_length=100)
     terrain_object = db.ReferenceField(Terrain)
     sensor_object = db.ReferenceField(Sensor)
+    variable_object = db.ReferenceField(Variable)

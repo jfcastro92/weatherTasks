@@ -11,7 +11,10 @@ curl -H "Content-Type: application/json" -X POST -d \
 
 
 curl -H "Content-Type: application/json" -X POST -d \
-'{"name": "sensor1", "description": "sensor de pruebas mqtt", "state": "1", "terrain_object": "5aa2fd40dc5f564d36ca82b5"}' http://0.0.0.0:4000/sensor/
+'{"name": "TerrenoPruebas", "description": "terreno de pruebas mqtt", "height": "256.8", "width": "345.0"}' http://162.243.173.22:8002//terrain/
 
 curl -H "Content-Type: application/json" -X POST -d \
-'{"name": "temp", "min_value": "11.0", "max_value": "31.0", "unit": "C"}' http://0.0.0.0:4003/variable/
+'{"name": "sensor1", "description": "sensor de pruebas mqtt", "state": "0", "terrain_object": "5b1b0fd7a836f21226d7220a"}' http://162.243.173.22:8002//sensor/
+
+curl -H "Content-Type: application/json" -X POST -d \
+'{"name": "temp", "min_value": "11.0", "max_value": "31.0", "unit": "C"}' http://162.243.173.22:8002/variable/

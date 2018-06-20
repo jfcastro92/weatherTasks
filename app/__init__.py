@@ -43,8 +43,6 @@ app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled for testing purpos
 
 
 mqtt = Mqtt(app)
-
-
 db = MongoEngine(app)
 api = MongoRest(app)
 
@@ -107,37 +105,37 @@ class AlertResource(Resource):
 @api.register(name='terrain', url='/terrain/')
 class TerrainView(ResourceView):
     resource = TerrainResource
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
 @api.register(name='variable', url='/variable/')
 class VariableView(ResourceView):
     resource = VariableResource
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
 @api.register(name='spvariables', url='/spvariables/')
 class SPView(ResourceView):
     resource = SystemParameterResource
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
 @api.register(name='sensor', url='/sensor/')
 class SensorView(ResourceView):
     resource = SensorResource
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
 @api.register(name='data', url='/data/')
 class DataView(ResourceView):
     resource = DataResource
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
 @api.register(name='wdata', url='/wdata/')
 class WeatherDataView(ResourceView):
     resource = WeatherDataResource
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
 @api.register(name='alert', url='/alert/')
 class AlertView(ResourceView):
     resource = AlertResource
-    methods = [methods.Create, methods.Update, methods.Fetch, methods.List]
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
 
 
@@ -153,8 +151,8 @@ def handle_mqtt_message(client, userdata, message):
         topic=message.topic,
         payload=message.payload.decode()
     )
-
+    print data
     #Store Data from sensor into mongoDB collections
-    data = [str(Sensor.objects(name=str(data["topic"]).split("/")[0])[0].id), str(Variable.objects(name=str(data["topic"]).split("/")[1])[0].id), str(data["payload"])]
-    Data(sensor_object= data[0], variable_type= data[1], data=data[2]).save()
+    #data = [str(Sensor.objects(name=str(data["topic"]).split("/")[0])[0].id), str(Variable.objects(name=str(data["topic"]).split("/")[1])[0].id), str(data["payload"])]
+    #Data(sensor_object= data[0], variable_type= data[1], data=data[2]).save()
    

@@ -7,9 +7,12 @@ import time
 
 #====================================================
 # MQTT Settings 
-MQTT_Broker = "localhost"
-MQTT_Port = 1883
+MQTT_Broker = "162.243.173.22"
+MQTT_Port = 8883
+MQTT_User = "weathertasks"
+MQTT_Pwd = "wtasks2018Admin"
 Keep_Alive_Interval = 5
+
 
 #====================================================
 
@@ -28,6 +31,7 @@ def on_disconnect(client, userdata, rc):
 		pass
 		
 mqttc = mqtt.Client()
+mqttc.username_pw_set(MQTT_User, MQTT_Pwd)
 mqttc.on_connect = on_connect
 mqttc.on_disconnect = on_disconnect
 mqttc.on_publish = on_publish
