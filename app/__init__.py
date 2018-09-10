@@ -65,7 +65,7 @@ class TerrainResource(Resource):
 class VariableResource(Resource):
     document = Variable
     filters = {
-        'name': [ops.Exact, ops.Startswith],
+        'name': [ops.Exact, ops.Startswith]
     }
 
 class SystemParameterResource(Resource):
@@ -78,6 +78,15 @@ class SensorResource(Resource):
     document = Sensor
     filters = {
         'name': [ops.Exact, ops.Startswith],
+        'terrain_object': [ops.Exact]
+    }
+
+class SensorVariableResource(Resource):
+    document = SensorVariable
+    filters = {
+        'name': [ops.Exact, ops.Startswith],
+        'id_sensor': [ops.Exact],
+        'id_variable': [ops.Exact]
     }
 
 class DataResource(Resource):
@@ -97,6 +106,9 @@ class AlertResource(Resource):
     filters = {
         'name': [ops.Exact, ops.Startswith],
         'alert_type' : [ops.Exact, ops.Startswith],
+        'terrain_object' : [ops.Exact],
+        'sensor_object' : [ops.Exact],
+        'variable_object' : [ops.Exact]
     }
 
 
@@ -122,6 +134,11 @@ class SensorView(ResourceView):
     resource = SensorResource
     methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
+@api.register(name='svariable', url='/svariable/')
+class SensorVariableView(ResourceView):
+    resource = SensorVariableResource
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
+
 @api.register(name='data', url='/data/')
 class DataView(ResourceView):
     resource = DataResource
@@ -140,19 +157,27 @@ class AlertView(ResourceView):
 
 
 #MQTT Methods Handler
-
+topics = ["temperature", "humidity", "light", "wind", "temp", "hum", "temperatura", "humedad", "luz", "viento"]
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
-    mqtt.subscribe('sensor1/temp')
+    #for topic in topics:
+    mqtt.subscribe("temp")
 
 @mqtt.on_message()
 def handle_mqtt_message(client, userdata, message):
+    #print client
     data = dict(
-        topic=message.topic,
-        payload=message.payload.decode()
+        sensor=message.payload.decode().split("/")[0],
+        data=message.payload.decode().split("/")[1],
+        variable = message.payload.decode().split("/")[2]
     )
-    print data
+    #print data
     #Store Data from sensor into mongoDB collections
+
+    #print str(Sensor.objects(name=str(data["sensor"])))
+    if (len(Sensor.objects(name=str(data["sensor"]))) != 0):
+        print "Insertando datos"
+        Data(sensor_object= str(Sensor.objects(name=str(data["sensor"]))[0].id), variable_type= data["variable"], data=data["data"]).save()
     #data = [str(Sensor.objects(name=str(data["topic"]).split("/")[0])[0].id), str(Variable.objects(name=str(data["topic"]).split("/")[1])[0].id), str(data["payload"])]
-    #Data(sensor_object= data[0], variable_type= data[1], data=data[2]).save()
+    #Data(sensor_object= data["sensor"], variable_type= data["variable"], data=data["data"]).save()
    

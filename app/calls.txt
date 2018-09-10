@@ -18,3 +18,9 @@ curl -H "Content-Type: application/json" -X POST -d \
 
 curl -H "Content-Type: application/json" -X POST -d \
 '{"name": "temp", "min_value": "11.0", "max_value": "31.0", "unit": "C"}' http://162.243.173.22:8002/variable/
+
+curl -H "Content-Type: application/json" -X POST -d \
+'{"alert_type": "warning", "data": "10.4", "description": "Temperatura baja para cultivo sensor 2", "terrain_object": "5b5c8ad0dc5f5603cbb09932", "sensor_object": "5b5c8b15dc5f5603cbb09933", "variable_object": "5b5c8b79dc5f5603cbb09935", "value_timestamp": "09/08/2018 20:00:00"}' http://127.0.0.1:4002//alert/
+
+curl -H "Content-Type: application/json" -X POST -d \
+'{"id_sensor": "5b5c8b15dc5f5603cbb09933", "id_variable": "5b5c8b79dc5f5603cbb09935"}' http://0.0.0.0:4002/svariable/

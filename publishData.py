@@ -7,10 +7,10 @@ import time
 
 #====================================================
 # MQTT Settings 
-MQTT_Broker = "162.243.173.22"
-MQTT_Port = 8883
-MQTT_User = "weathertasks"
-MQTT_Pwd = "wtasks2018Admin"
+MQTT_Broker = "localhost"
+MQTT_Port = 1883
+MQTT_User = ""
+MQTT_Pwd = ""
 Keep_Alive_Interval = 5
 
 
@@ -58,8 +58,8 @@ def publish_Fake_Sensor_Values_to_MQTT(sensor, toggle):
 
 			#Publicacion del dato generado al servidor MOSQUITTO
 			print "Publishing Humidity Value: " + str(Humidity_Fake_Value) + "..."
-			MQTT_Topic_Humidity = str(sensor + "/" + toggle)
-			publish_To_Topic (MQTT_Topic_Humidity, Humidity_Fake_Value)
+			MQTT_Topic_Humidity = toggle
+			publish_To_Topic (MQTT_Topic_Humidity, sensor + "/" + str(Humidity_Fake_Value) + "/"+ toggle)
 
 		elif toggle == "temp":
 			#Generacion de dato de temperatura
@@ -67,21 +67,21 @@ def publish_Fake_Sensor_Values_to_MQTT(sensor, toggle):
 
 			#Publicacion del dato generado al servidor MOSQUITTO
 			print "Publishing Temperature Value: " + str(Temperature_Fake_Value) + "..."
-			MQTT_Topic_Temperature = str(sensor + "/" + toggle) 
-			publish_To_Topic (MQTT_Topic_Temperature, str(Temperature_Fake_Value))
+			MQTT_Topic_Temperature = toggle
+			publish_To_Topic (MQTT_Topic_Temperature, sensor + "/" + str(Temperature_Fake_Value)  + "/"+ toggle)
 		else:
 			Humidity_Fake_Value = float("{0:.2f}".format(random.uniform(50, 100)))
 			Temperature_Fake_Value = float("{0:.2f}".format(random.uniform(1, 50)))
 
 			#Generacion de dato de humedad y temperatura
-			MQTT_Topic_Humidity = str(sensor + "/" +"temp")
-			MQTT_Topic_Temperature = str(sensor + "/" + "hum")
+			MQTT_Topic_Humidity = "hum"
+			MQTT_Topic_Temperature = "temp"
 
 			#Publicacion del dato generado al servidor MOSQUITTO
 			print "Publishing Temperature Value: " + str(Temperature_Fake_Value) + "..."
-			publish_To_Topic (MQTT_Topic_Temperature, str(Temperature_Fake_Value))
+			publish_To_Topic (MQTT_Topic_Temperature,sensor + "/" + str(Temperature_Fake_Value) + "/"+ MQTT_Topic_Temperature)
 			print "Publishing Humidity Value: " + str(Humidity_Fake_Value) + "..."
-			publish_To_Topic (MQTT_Topic_Humidity, str(Humidity_Fake_Value))
+			publish_To_Topic (MQTT_Topic_Humidity,sensor + "/" + str(Humidity_Fake_Value) + "/"+ MQTT_Topic_Humidity)
 		time.sleep(3)
 
 

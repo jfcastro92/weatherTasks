@@ -13,6 +13,8 @@ class Terrain(db.Document):
     description = db.StringField(max_length=50, required=False)
     height = db.FloatField(required=True)
     width = db.FloatField(required=True)
+    lat = db.FloatField(required=True)
+    lon = db.FloatField(required=True)
 
 
 #Variables Data Collection Definitions
@@ -20,11 +22,17 @@ class Variable(db.Document):
     name = db.StringField(max_length=30, required=True)
     min_value = db.FloatField()
     max_value = db.FloatField()
+    alert_max = db.FloatField()
+    alert_min = db.FloatField()
     unit = db.StringField(max_length=5, required=True)
 
 #SystemParameter Data Collection Definitions
 class SystemParameter(db.Document):
     name = db.StringField(max_length=30, required=True)
+    email = db.StringField(max_length=30, required=True)
+    Measure = db.StringField(max_length=30, required=True)
+    default = db.StringField(max_length=1, required=True)
+
 
 #Sensor Data Collection Definitions
 class Sensor(db.Document):
@@ -32,6 +40,11 @@ class Sensor(db.Document):
     description = db.StringField(max_length=50, required=False)
     state = db.BooleanField(default=False, required=False)
     terrain_object = db.ReferenceField(Terrain)
+
+#Sensor - Variables Data collection relations
+class SensorVariable(db.Document):
+    id_sensor = db.ReferenceField(Sensor)
+    id_variable = db.ReferenceField(Variable)
 
 #Data Collection Definitions
 class Data(db.Document):
@@ -61,3 +74,4 @@ class Alert(db.Document):
     terrain_object = db.ReferenceField(Terrain)
     sensor_object = db.ReferenceField(Sensor)
     variable_object = db.ReferenceField(Variable)
+    value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)

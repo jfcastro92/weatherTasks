@@ -4,16 +4,22 @@ Python Aplication Template
 Licence: GPLv3
 """
 
+import json
+import datetime
+import requests
+
 from flask import url_for, redirect, render_template, flash, g, session
 # from flask_login import login_user, logout_user, current_user, login_required
 from app import app
 from forms import ExampleForm, LoginForm
-from app.models import *
 from flask import jsonify
 from flask import request
 from flask_pymongo import PyMongo
+from mongoengine.queryset.visitor import Q
+from app.models import *
 
-import requests
+
+
 
 #----------------CORS IMPLEMENTATION-------------
 from datetime import timedelta  
@@ -63,23 +69,86 @@ def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_t
 
 @app.route('/things', methods=['GET'])
 @crossdomain(origin='*')
-def get_all_terrain():
-  terrain = Terrain
-  sensor = Sensor
-  variables = Variable
-  alertas = Alert
-
+def get_all_terrains():
   output = []
-  s_var = 0
-  
-  for i in sensor.objects:
-    if sensor.objects[0].state == True:
-      s_var = s_var + 1
+  s_var = Sensor.objects(state=True).count()
+  # for i in sensor.objects:
+  #   print sensor.objects[0].state
+  #   if sensor.objects[0].state == True:
+  #     s_var = s_var + 1
 
-  output.append({'terrain' : terrain.objects.count(), 'sensor' : s_var,
-   'variables' : variables.objects.count(), 'alertas': alertas.objects.count()})
-  print output
+  output.append({'terrain' : Terrain.objects.count(), 'sensor' : s_var,
+   'variables' : Variable.objects.count(), 'alertas': Alert.objects(value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))).count()})
+  #print output
   return jsonify({'result' : output})
+
+@app.route('/terrainsget', methods=['GET'])
+@crossdomain(origin='*')
+def get_all_terrain():
+  data = []
+
+  for terrain in Terrain.objects:
+    output = {}
+    s_data = {}
+    a_data = {}
+
+    output['id'] = str(terrain.id)
+    output['name'] = terrain.name
+    output['description'] = terrain.description
+    output['lat'] = terrain.lat
+    output['lon'] = terrain.lon
+    sensors = []
+    alerts = []
+    for sensor in Sensor.objects(terrain_object = terrain):
+      s_data = {"id": str(sensor.id),"name": sensor.name, "state": sensor.state, "description": sensor.description}
+      sensors.append(s_data)
+    for alert in Alert.objects(terrain_object = terrain, value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))):
+      a_data = {"id": str(alert.id), "description": alert.description}
+      alerts.append(a_data)
+
+    output['sensor'] = sensors  
+    output['alert'] = alerts
+    data.append(output)
+
+  return jsonify({'result' : data})
+
+
+@app.route('/alertsget', methods=['GET'])
+@crossdomain(origin='*')
+def get_all_alerts():
+
+  data = []
+  #value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))
+  for alert in Alert.objects():#value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))):
+    output = {}
+    s_data = {}
+    t_data = {}
+    v_data = {}
+
+    output['id'] = str(alert.id)
+    output['data'] = alert.data
+    output['description'] = alert.description
+    output['alert_type'] = alert.alert_type
+    output['value_timestamp'] = str(alert.value_timestamp)
+
+    sensor = {"id": str(alert.sensor_object.id), "name": alert.sensor_object.name, 
+              "state": alert.sensor_object.state, "description": alert.sensor_object.description}
+    
+    terrain = {"id": str(alert.terrain_object.id),"name": alert.terrain_object.name, 
+              "lat": alert.terrain_object.lat, "lon": alert.terrain_object.lon, 
+              "description": alert.terrain_object.description}
+
+    variable = {"id": str(alert.variable_object.id),"name": alert.variable_object.name,
+             "unit": alert.variable_object.unit, "alert_max": alert.variable_object.alert_max,
+             "alert_min": alert.variable_object.alert_min, "max_value": alert.variable_object.max_value, 
+             "min_value": alert.variable_object.min_value}
+
+    output['sensor'] = sensor
+    output['terrain'] = terrain
+    output['variable'] = variable
+    data.append(output)
+
+  return jsonify({'result' : data})
 
 @app.route('/terrain_create', methods=['POST'])
 @crossdomain(origin='*')
@@ -92,6 +161,48 @@ def add_terrain():
   output = {'CREATED' : t_id['name'], 'height' : t_id['height'], 'width' : t_id['width']}
   return jsonify({'result' : output})
 
+@app.route('/getsensordata', methods=['POST'])
+@crossdomain(origin='*')
+def sensorvariable():
+  input_data = request.get_json()
+  data = []
+
+  for sensor in Sensor.objects(terrain_object = input_data['id_terreno']):
+    s_data = {}
+    s_data['id'] = str(sensor.id)
+    s_data['name'] = sensor.name
+    s_data['description'] = sensor.description
+    s_data['state'] = sensor.state
+
+    for sensorvariable in SensorVariable.objects(id_sensor = sensor):
+      variables = []
+      for variable in Variable.objects():
+        if str(variable.id) == str(sensorvariable.id_variable.id):
+          v_data = {}
+          v_data['name'] = str(variable.name)
+          v_data['unit'] = str(variable.unit)
+          v_data['min_value'] = str(variable.min_value)
+          v_data['max_value'] = str(variable.max_value)
+          v_data['alert_min'] = str(variable.alert_min)
+          v_data['alert_max'] = str(variable.alert_max)
+          variables.append(v_data)
+    s_data['variables'] = variables
+  data.append(s_data)
+  return jsonify({'result' : data})
+
+@app.route('/getsdata', methods=['POST'])
+@crossdomain(origin='*')
+def sensordata():
+  input_data = request.get_json()
+  print input_data['id_sensor']
+  return jsonify({'result' : Data.objects(sensor_object = input_data['id_sensor']).order_by('value_timestamp').first()})
+
+@app.route('/sensoralert', methods=['POST'])
+@crossdomain(origin='*')
+def sensorAlerts():
+  input_data = request.get_json()
+  print input_data['id_sensor']
+  return jsonify({'result' : Alert.objects(sensor_object = input_data['id_sensor']).order_by('value_timestamp')})#value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))):
 
 
 @app.route('/')
