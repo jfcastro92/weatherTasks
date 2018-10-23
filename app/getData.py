@@ -28,7 +28,7 @@ def getData():
 					"clouds" : str(i["clouds"]["all"]),
 					"wind" : str(i["wind"]["speed"]),
 					"dt_txt" : str(i["dt_txt"])}
-		r = requests.post('http://0.0.0.0:4000/wdata/', data = json.dumps(data_insert), headers=headers)
+		r = requests.post('http://0.0.0.0:4002/wdata/', data = json.dumps(data_insert), headers=headers)
 		#print r.status_code, r.reason
 
 	print "Se ha completado el proceso de construccion de datos"

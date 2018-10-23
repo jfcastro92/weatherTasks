@@ -72,14 +72,11 @@ def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_t
 def get_all_terrains():
   output = []
   s_var = Sensor.objects(state=True).count()
-  # for i in sensor.objects:
-  #   print sensor.objects[0].state
-  #   if sensor.objects[0].state == True:
-  #     s_var = s_var + 1
+
 
   output.append({'terrain' : Terrain.objects.count(), 'sensor' : s_var,
-   'variables' : Variable.objects.count(), 'alertas': Alert.objects(value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))).count()})
-  #print output
+   'variables' : Variable.objects.count(),
+    'alertas': Alert.objects(value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))).count()})
   return jsonify({'result' : output})
 
 @app.route('/terrainsget', methods=['GET'])
@@ -95,6 +92,8 @@ def get_all_terrain():
     output['id'] = str(terrain.id)
     output['name'] = terrain.name
     output['description'] = terrain.description
+    output['height'] = terrain.height
+    output['width'] = terrain.width
     output['lat'] = terrain.lat
     output['lon'] = terrain.lon
     sensors = []

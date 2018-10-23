@@ -24,3 +24,6 @@ curl -H "Content-Type: application/json" -X POST -d \
 
 curl -H "Content-Type: application/json" -X POST -d \
 '{"id_sensor": "5b5c8b15dc5f5603cbb09933", "id_variable": "5b5c8b79dc5f5603cbb09935"}' http://0.0.0.0:4002/svariable/
+
+curl -H "Content-Type: application/json" -X PUT -d \
+'{"id":"5b71de92db4b4e31e45f4922","name": "TerrenoPruebasPUT", "description": "terreno de pruebas mqtt", "height": "256.8", "width": "345.0", "lat": "4.595715", "lon": "-76.063131"}' http://0.0.0.0:4002//terrain/
