@@ -24,7 +24,23 @@ app.debug = True
 #    'flask_debugtoolbar.panels.logger.LoggingPanel',
 #    'flask_mongoengine.panels.MongoDebugPanel'
 #)
+curl -H "Content-Type: application/json" -X POST -d \
+'{"name": "TerrenoPrueba MongoREST", "height": "20.0", "width": "12.5"}' 
 
+
+
+http://0.0.0.0:5000/posts/
+{
+  "id": "1",
+  "title": "First post!",
+  "author_id": "author_id_from_a_previous_api_call",
+  "content": {
+    "text": "this is our test post content"
+  }
+} 
+
+Create a Post:
+curl -H "Content-Type: application/json" -X POST -d \ '{"name": "TerrenoPrueba MongoREST", "height": "20.0", "width": "12.5"}' http://0.0.0.0:4002/terrain/
 #app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 db = MongoEngine()
