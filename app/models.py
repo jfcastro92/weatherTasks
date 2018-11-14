@@ -51,7 +51,7 @@ class Data(db.Document):
     sensor_object = db.ReferenceField(Sensor)
     variable_type = db.ReferenceField(Variable)
     data = db.FloatField(required=True)
-    value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
+    value_timestamp = db.StringField(max_length=100)
 
 #WeatherData Data Collection Definitions
 class WeatherData(db.Document):
@@ -74,4 +74,12 @@ class Alert(db.Document):
     terrain_object = db.ReferenceField(Terrain)
     sensor_object = db.ReferenceField(Sensor)
     variable_object = db.ReferenceField(Variable)
-    value_timestamp = db.DateTimeField(default=datetime.datetime.utcnow)
+    value_timestamp = db.StringField(max_length=100)
+
+class AlertFlag(db.Document):
+    sensor_object = db.ReferenceField(Sensor)
+    variable_object = db.ReferenceField(Variable)
+    alert_flag = db.BooleanField(default=False, required=False)
+    data = db.FloatField(required=True)
+    value_timestamp = db.StringField(max_length=100)
+

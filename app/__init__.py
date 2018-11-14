@@ -6,6 +6,8 @@ Licence: GPLv3
 import os
 import sys
 import datetime
+import json
+from datetime import datetime
 from flask import Flask
 from flask_mongoengine import MongoEngine
 from flask_mongorest import MongoRest
@@ -34,33 +36,26 @@ app.config.update(
     },
 )
 
-app.config['MQTT_BROKER_URL'] = 'localhost'  # use the free broker from HIVEMQ
-app.config['MQTT_BROKER_PORT'] = 1883  # default port for non-tls connection
-app.config['MQTT_USERNAME'] = ''  # set the username here if you need authentication for the broker
-app.config['MQTT_PASSWORD'] = ''  # set the password here if the broker demands authentication
-app.config['MQTT_KEEPALIVE'] = 5  # set the time interval for sending a ping to the broker to 5 seconds
+app.config['MQTT_BROKER_URL'] = '162.243.173.22'  # use the free broker from HIVEMQ
+app.config['MQTT_BROKER_PORT'] = 8883  # default port for non-tls connection
+app.config['MQTT_USERNAME'] = 'weathertasks'  # set the username here if you need authentication for the broker
+app.config['MQTT_PASSWORD'] = 'wtasks2018Admin'  # set the password here if the broker demands authentication
+app.config['MQTT_KEEPALIVE'] = 45  # set the time interval for sending a ping to the broker to 5 seconds
 app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled for testing purposes
 
-
-mqtt = Mqtt(app)
 db = MongoEngine(app)
 api = MongoRest(app)
+mqtt = Mqtt(app)
 
 from app import views, models
 from models import *
 
-#Recorsuces definitions for collections objects 
+#Resources definitions for collections objects 
 class TerrainResource(Resource):
     document = Terrain
-    #related_resources = {
-    #    'content': ContentResource,
-    #}
     filters = {
         'name': [ops.Exact, ops.Startswith],
     }
-    # rename_fields = {
-    #     'author': 'author_id',
-    # }
 
 class VariableResource(Resource):
     document = Variable
@@ -92,7 +87,8 @@ class SensorVariableResource(Resource):
 class DataResource(Resource):
     document = Data
     filters = {
-        'name': [ops.Exact, ops.Startswith],
+        'sensor_object': [ops.Exact],
+        'variable_type': [ops.Exact]
     }
 
 class WeatherDataResource(Resource):
@@ -107,6 +103,13 @@ class AlertResource(Resource):
         'name': [ops.Exact, ops.Startswith],
         'alert_type' : [ops.Exact, ops.Startswith],
         'terrain_object' : [ops.Exact],
+        'sensor_object' : [ops.Exact],
+        'variable_object' : [ops.Exact]
+    }
+
+class AlertFlagResource(Resource):
+    document = AlertFlag
+    filters = {
         'sensor_object' : [ops.Exact],
         'variable_object' : [ops.Exact]
     }
@@ -154,30 +157,146 @@ class AlertView(ResourceView):
     resource = AlertResource
     methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
+api.register(name='alert', url='/alert/')
+class AlertFlagView(ResourceView):
+    resource = AlertFlagResource
+    methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
+
+#------------Clase controladora de alertas para cada mensaje MQTT----------------------------------
+class DataHandler(object):
+
+    #Atributo sensor de la clase
+    sensor = {}
+
+    #Metodo de inicializacion de la clase DataHandler
+    def __init__(self):
+        super(DataHandler, self).__init__()
+
+    #Metodo de busqueda y determinación si la alerta es en la misma hora
+    #Inputs: Objeto(id_sensor ,id_variable, date, value)
+    #Output: res: Booleano True o False
+    def searchSensor(self, object):
+        res = False
+        #Entra a buscar el flag en tabla de ultima alerta con id_sensor y id_variable
+        p_alert = AlertFlag.objects(sensor_object= str(object["id_sensor"]),
+                                    variable_object= str(object["id_variable"]),
+                                    )
+
+        #Se convierten las fechas del objeto de entrada y de la ultima alerta reportada en el mismo formato
+        datetime_object = datetime.datetime.strptime(object["date"], "%Y-%m-%dT%H:%M:%S.%f")
+        last_date = datetime.datetime.strptime(p_alert[0]["value_timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
+
+        #Validacion de si hay Flag de alerta en la tabla y si este flag es mayor a 1 hora,
+        #de ser mayor a una hora se realiza la actualizacion del Flag con la informacion nueva sino,
+        #no se genera la respuesta (res) la cual crea la alerta para el usuario en la tabla de alertas
+        if len(p_alert) > 0:
+            if bool(p_alert[0]["alert_flag"]) == True and (datetime_object - datetime.timedelta(hours=1)) < last_date:
+                res = True
+        else:
+            res = False
+            AlertFlag(sensor_object=object["id_sensor"],variable_object=object["id_variable"],
+             alert_flag= "True", data=object["value"], value_timestamp=object["date"]).save()
+        return res
 
 
-#MQTT Methods Handler
-topics = ["temperature", "humidity", "light", "wind", "temp", "hum", "temperatura", "humedad", "luz", "viento"]
+    #Metodo que genera las alertas para el usuario final, de acuerdo al valor reportado por el sensor 
+    #en una variable medioambiental especifica. Cada vez que un sensor reporta, se realiza la validacion
+    #Inputs: Objeto: sensor, data, variable, date)
+    #Output: N/A
+    def alertGenerator(self, object):
+        
+        #Busqueda de la variable ambiental que se esta reportando mediante el mensaje MQTT
+        variable = Variable.objects(id=str(object["variable"]))[0]
+
+        #Declaración de variables para la alerta, de acuerdo al valor reportado y la validacion
+        #con los maximos y minimos de la variable que se esta reportando
+        des = ""
+        alert_type = ""
+
+        #Asignacion de los valores del objeto sensor para cada mensaje MQTT que llega al servidor
+        self.sensor["id_sensor"] = str(object["sensor"])
+        self.sensor["value"] = str(object["data"])
+        self.sensor["date"] = str(object["date"])
+        self.sensor["id_variable"] = str(object["variable"])
+
+        #Validacion del valor para generar warning de minimo valor reportado
+        if float(object["data"]) <= float(variable.min_value) and float(object["data"]) > float(variable.alert_min):
+            print "Alerta warning min_value"
+            des = "Alerta warning valor minimo sobre variable: "+ str(variable.name)
+            alert_type = "warning"
+
+        #Validacion del valor para generar warning de minimo maximo reportado
+        elif float(object["data"]) > float(variable.max_value) and float(object["data"]) > float(variable.alert_max):
+            print "Alerta warning max_value"
+            des = "Alerta warning valor maximo sobre variable: "+ str(variable.name)
+            alert_type = "warning"
+
+        #Validacion del valor para generar danger de minimo valor reportado
+        elif float(object["data"]) < float(variable.alert_min):
+            print "Alerta danger alert_min"
+            des = "Alerta danger valor minimo sobre variable: "+ str(variable.name)
+            alert_type = "danger"
+
+        #Validacion del valor para generar danger de maximo valor reportado
+        elif float(object["data"]) > float(variable.alert_max):
+            print "Alerta danger alert_max"
+            des = "Alerta danger valor maximo sobre variable: "+ str(variable.name)
+            alert_type = "danger"
+        else:
+            print "Sensor reportando normalmente valor"
+
+        #Validación de bsuqueda de Flag en la base de datos, para saber si la alerta tiene más de 1 hora
+        #NOTA: Dado que las variables medioambientales no cambiar de forma subita, se realiza esta validacion
+        #para no generar multiples alertas sobre el mismo comportamiento en el cultivo
+        if (self.searchSensor(self.sensor) == False):
+
+            #Se genera alerta para guardar en base de datos con los valores entregados por el mensaje MQTT
+            Alert(alert_type=alert_type, data=str(str(object["data"])), 
+                     description= des,
+                     terrain_object= str(Sensor.objects(id=str(object["sensor"]))[0].terrain_object), 
+                     sensor_object =str(object["sensor"]), 
+                     variable_object= str(variable.id),
+                     value_timestamp=str(object["date"])).save()
+
+
+#-------------------------------------------MQTT Methods Handler---------------------------------------------------------
+mqtt.subscribe("System/Sensors/#")
+
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
-    #for topic in topics:
-    mqtt.subscribe("temp")
+    print('on_connect client : {} userdata :{} flags :{} rc:{}'.format(client, userdata, flags, rc))
+
+
+@mqtt.on_subscribe()
+def handle_subscribe(client, userdata, mid, granted_qos):
+    print('on_subscribe client : {} userdata :{} mid :{} granted_qos:{}'.format(client, userdata, mid, granted_qos))
+
+@mqtt.on_log()
+def handle_logging(client, userdata, level, buf):
+    print(level, buf)
 
 @mqtt.on_message()
 def handle_mqtt_message(client, userdata, message):
-    #print client
+    
+    #Descodificacion del mensaje JSON y creacion del dato con el mensaje MQTT reportado desde 
+    #la estacion de toma de variables mediambientales en el cultivo
+    mqtt_data = json.loads(message.payload)
     data = dict(
-        sensor=message.payload.decode().split("/")[0],
-        data=message.payload.decode().split("/")[1],
-        variable = message.payload.decode().split("/")[2]
+       sensor=mqtt_data["Sensor_ID"],
+       data=mqtt_data["Value"],
+       variable = mqtt_data["Variable_ID"],
+       date = mqtt_data["Date"]
     )
-    #print data
-    #Store Data from sensor into mongoDB collections
+    print data
 
-    #print str(Sensor.objects(name=str(data["sensor"])))
-    if (len(Sensor.objects(name=str(data["sensor"]))) != 0):
-        print "Insertando datos"
-        Data(sensor_object= str(Sensor.objects(name=str(data["sensor"]))[0].id), variable_type= data["variable"], data=data["data"]).save()
-    #data = [str(Sensor.objects(name=str(data["topic"]).split("/")[0])[0].id), str(Variable.objects(name=str(data["topic"]).split("/")[1])[0].id), str(data["payload"])]
-    #Data(sensor_object= data["sensor"], variable_type= data["variable"], data=data["data"]).save()
+    #Almacenamiento de valores de variables medioambientales en la tabla de datos del aplicativo
+    if (len(Sensor.objects(id=str(data["sensor"]))) != 0):
+        print "Insertando dato :" + str(data["data"])
+        Data(sensor_object=str(Sensor.objects(id=str(data["sensor"]))[0].id), 
+            variable_type=str(Variable.objects(id=str(data["variable"]))[0].id), 
+            data=str(data["data"]), value_timestamp=str(data["date"])).save()
+
+        #Verificacion del dato que llega en el mensaje MQTT para realizar la generacion de la alerta o no
+        alertData = DataHandler()
+        alertData.alertGenerator(data)
    
