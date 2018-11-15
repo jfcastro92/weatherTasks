@@ -24,7 +24,15 @@ from flask_mqtt import Mqtt
 
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../../')))
 
+#Archivo de configuracion de parametros del aplicativo WEATHERTASKS
+with open("app/credentials.txt", "r") as cred:
+    connection_data = []
+    for line in cred:
+        connection_data.append(line.rstrip('\n'))
+
 app = Flask(__name__)
+
+print connection_data
 
 #--------------------------CONFIGURACION DE PARAMETROS DE CONEXION MONGODB Y MQTT----------------------------------
 #Se realiza la configuración de la base de datos en donde el aplicativo weatherTasks va a almacenar los datos del
@@ -33,9 +41,9 @@ app.config.update(
     DEBUG = True,
     TESTING = True,
     MONGODB_SETTINGS = {
-        'HOST': 'localhost',
-        'PORT': 27017,
-        'DB': 'weatherTasks',
+        'HOST': connection_data[0],
+        'PORT': int(connection_data[1]),
+        'DB': connection_data[2],
         'TZ_AWARE': False,
     },
 )
@@ -43,10 +51,10 @@ app.config.update(
 #Se realiza la definicion de la conexion con el broker MQTT, el cual usa MOSQUITTO MQTT para realizar todo el proceso
 #de publicacion o suscripcion a los mensajes entre los componentes del sistema (M2M).
 
-app.config['MQTT_BROKER_URL'] = '162.243.173.22'  # IP donde esta el servicio de Broker MQTT
-app.config['MQTT_BROKER_PORT'] = 8883  # Puerto conexion al borker MQTT
-app.config['MQTT_USERNAME'] = 'weathertasks'  # Username de conexion al broker
-app.config['MQTT_PASSWORD'] = 'wtasks2018Admin'  # Password de conexion al broker
+app.config['MQTT_BROKER_URL'] = connection_data[3]  # IP donde esta el servicio de Broker MQTT
+app.config['MQTT_BROKER_PORT'] = int(connection_data[4])  # Puerto conexion al borker MQTT
+app.config['MQTT_USERNAME'] = connection_data[5]  # Username de conexion al broker
+app.config['MQTT_PASSWORD'] = connection_data[6]  # Password de conexion al broker
 app.config['MQTT_KEEPALIVE'] = 45  # Intervalo de tiempo de envio de PING al broker
 app.config['MQTT_TLS_ENABLED'] = False  # Parametro de seguridad SSL para cifrado de los datos
 
@@ -188,6 +196,27 @@ class DataHandler(object):
     def __init__(self):
         super(DataHandler, self).__init__()
 
+
+    #Metodo de analisis de pronostico climatico y generacion de recomendacion al usuario basado en datos
+    #de reporte del sensor
+    #Inputs: Objeto(id_sensor ,id_variable, date, value)
+    #Output: Alerta con recomendación preventiva
+    def alertsMatch(self, object):
+
+        weather_data = Data.objects(sensor_object= str(object["id_sensor"]),
+                                    variable_type= str(object["id_variable"]),
+                                    )
+
+        weather_forecast = WeatherData()
+        weather_data = weather_data[:100]
+        data = 0
+        for i in weather_data:
+            data = float(i["data"]) + data
+
+        for j in weather_forecast:
+            print "test"
+        data = round(data/len(weather_data),2)
+
     #Metodo de busqueda y determinación si la alerta es en la misma hora
     #Inputs: Objeto(id_sensor ,id_variable, date, value)
     #Output: res: Booleano True o False
@@ -235,13 +264,15 @@ class DataHandler(object):
         self.sensor["date"] = str(object["date"])
         self.sensor["id_variable"] = str(object["variable"])
 
+        self.alertsMatch(self.sensor)
+
         #Validacion del valor para generar warning de minimo valor reportado
         if float(object["data"]) <= float(variable.min_value) and float(object["data"]) > float(variable.alert_min):
             print "Alerta warning min_value"
             des = "Alerta warning valor minimo sobre variable: "+ str(variable.name)
             alert_type = "warning"
 
-        #Validacion del valor para generar warning de minimo maximo reportado
+        #Validacion del valor para generar warning de maximo reportado
         elif float(object["data"]) > float(variable.max_value) and float(object["data"]) > float(variable.alert_max):
             print "Alerta warning max_value"
             des = "Alerta warning valor maximo sobre variable: "+ str(variable.name)
