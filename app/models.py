@@ -1,7 +1,9 @@
 # -*- encoding: utf-8 -*-
 """
-Python Aplication Template
-Licence: GPLv3
+Poryecto de grado: WeatherTasks Version 1.0
+Juan Fernando Castro Mesa - Ingenieria Sistemas y Computacion
+Pontificia Universidad Javeriana Cali - 2018
+
 """
 
 from app import db

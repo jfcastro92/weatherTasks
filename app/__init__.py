@@ -1,7 +1,9 @@
 # -*- encoding: utf-8 -*-
 """
-Python Aplication Template
-Licence: GPLv3
+Poryecto de grado: WeatherTasks Version 1.0
+Juan Fernando Castro Mesa - Ingenieria Sistemas y Computacion
+Pontificia Universidad Javeriana Cali - 2018
+
 """
 import os
 import sys
@@ -24,7 +26,9 @@ sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../
 
 app = Flask(__name__)
 
-# Esto lo mejor seria traerlo de un archivo de config, pero por ahora lo podemos dejar así
+#--------------------------CONFIGURACION DE PARAMETROS DE CONEXION MONGODB Y MQTT----------------------------------
+#Se realiza la configuración de la base de datos en donde el aplicativo weatherTasks va a almacenar los datos del
+#terreno y todos los mensajes de variables ambientales que se reporten mediante el broker de transmision MQTT.
 app.config.update(
     DEBUG = True,
     TESTING = True,
@@ -36,13 +40,21 @@ app.config.update(
     },
 )
 
-app.config['MQTT_BROKER_URL'] = '162.243.173.22'  # use the free broker from HIVEMQ
-app.config['MQTT_BROKER_PORT'] = 8883  # default port for non-tls connection
-app.config['MQTT_USERNAME'] = 'weathertasks'  # set the username here if you need authentication for the broker
-app.config['MQTT_PASSWORD'] = 'wtasks2018Admin'  # set the password here if the broker demands authentication
-app.config['MQTT_KEEPALIVE'] = 45  # set the time interval for sending a ping to the broker to 5 seconds
-app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled for testing purposes
+#Se realiza la definicion de la conexion con el broker MQTT, el cual usa MOSQUITTO MQTT para realizar todo el proceso
+#de publicacion o suscripcion a los mensajes entre los componentes del sistema (M2M).
 
+app.config['MQTT_BROKER_URL'] = '162.243.173.22'  # IP donde esta el servicio de Broker MQTT
+app.config['MQTT_BROKER_PORT'] = 8883  # Puerto conexion al borker MQTT
+app.config['MQTT_USERNAME'] = 'weathertasks'  # Username de conexion al broker
+app.config['MQTT_PASSWORD'] = 'wtasks2018Admin'  # Password de conexion al broker
+app.config['MQTT_KEEPALIVE'] = 45  # Intervalo de tiempo de envio de PING al broker
+app.config['MQTT_TLS_ENABLED'] = False  # Parametro de seguridad SSL para cifrado de los datos
+
+#-------------------------------------INSTANCIACION DE LOS MODULOS WEATHERTASKS-------------------------------------
+#Mediante la declaracion de las variables db, api, mqtt realizamos el encapsulamiento de las librerias necesarias
+#como MongoEngine, Mqtt y MongoRest las cuales crean un contexto de aplicacion que da lugar a manejar los datos de
+#WEATHERTASKS a nivel de paso de mensajes MQTT, Manejador de colecciones de base de datos MONGODB e interfaces de
+#servicios web REST para interactuar con los modelos definidos para el aplicativo.
 db = MongoEngine(app)
 api = MongoRest(app)
 mqtt = Mqtt(app)
@@ -50,7 +62,13 @@ mqtt = Mqtt(app)
 from app import views, models
 from models import *
 
-#Resources definitions for collections objects 
+#--------------------------------------Declaracion de la API REST----------------------------------------------------
+#Mediante la declaracion de la API REST se realiza el encapsulamiento de los modelos de base de datos creados en
+#MongoDB para exponerlos mediante servicios web REST a traves de internet y asi realizar la manipulacion de los datos
+#Cada entidad del prototipo tiene su modelo de base de datos con su CRUD (Create, Request, Update y Delete). Mediante
+#la definicion de las clases manejadoras de cada coleccion de base de datos y las reglas de busqueda en las consultas
+#se realiza toda la creacion del modelo de datos del aplicativo WeatherTasks.
+
 class TerrainResource(Resource):
     document = Terrain
     filters = {
@@ -115,8 +133,6 @@ class AlertFlagResource(Resource):
     }
 
 
-
-#API Registration Methods for REST Operations
 @api.register(name='terrain', url='/terrain/')
 class TerrainView(ResourceView):
     resource = TerrainResource
@@ -162,7 +178,7 @@ class AlertFlagView(ResourceView):
     resource = AlertFlagResource
     methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
-#------------Clase controladora de alertas para cada mensaje MQTT----------------------------------
+#-----------------------------Clase controladora de alertas para cada mensaje MQTT----------------------------------
 class DataHandler(object):
 
     #Atributo sensor de la clase
@@ -299,4 +315,3 @@ def handle_mqtt_message(client, userdata, message):
         #Verificacion del dato que llega en el mensaje MQTT para realizar la generacion de la alerta o no
         alertData = DataHandler()
         alertData.alertGenerator(data)
-   

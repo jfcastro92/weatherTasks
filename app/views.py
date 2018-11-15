@@ -1,7 +1,9 @@
 # -*- encoding: utf-8 -*-
 """
-Python Aplication Template
-Licence: GPLv3
+Poryecto de grado: WeatherTasks Version 1.0
+Juan Fernando Castro Mesa - Ingenieria Sistemas y Computacion
+Pontificia Universidad Javeriana Cali - 2018
+
 """
 
 import json
@@ -9,7 +11,6 @@ import datetime
 import requests
 
 from flask import url_for, redirect, render_template, flash, g, session
-# from flask_login import login_user, logout_user, current_user, login_required
 from app import app
 from forms import ExampleForm, LoginForm
 from flask import jsonify

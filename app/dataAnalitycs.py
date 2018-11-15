@@ -1,3 +1,11 @@
+# -*- encoding: utf-8 -*-
+"""
+Poryecto de grado: WeatherTasks Version 1.0
+Juan Fernando Castro Mesa - Ingenieria Sistemas y Computacion
+Pontificia Universidad Javeriana Cali - 2018
+
+"""
+
 import requests
 import json
 import schedule
