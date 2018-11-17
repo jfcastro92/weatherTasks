@@ -179,7 +179,7 @@ class AlertView(ResourceView):
     resource = AlertResource
     methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
 
-api.register(name='alert', url='/alert/')
+api.register(name='alertflag', url='/alertf/')
 class AlertFlagView(ResourceView):
     resource = AlertFlagResource
     methods = [methods.Create, methods.Update, methods.Fetch, methods.List, methods.Delete]
@@ -203,16 +203,10 @@ class DataHandler(object):
 
         weather_data = Data.objects(sensor_object= str(object["id_sensor"]),
                                     variable_type= str(object["id_variable"]),
-                                    )
+                                    value_timestamp__gt = str(datetime.datetime.strptime(object["date"], "%Y-%m-%dT%H:%M:%S.%f")-datetime.timedelta(days=1)))
 
         weather_forecast = WeatherData()
         weather_data = weather_data[:100]
-        data = 0
-        for i in weather_data:
-            data = float(i["data"]) + data
-
-        for j in weather_forecast:
-            print "test"
         data = round(data/len(weather_data),2)
 
     #Metodo de busqueda y determinación si la alerta es en la misma hora
@@ -223,17 +217,13 @@ class DataHandler(object):
         #Entra a buscar el flag en tabla de ultima alerta con id_sensor y id_variable
         p_alert = AlertFlag.objects(sensor_object= str(object["id_sensor"]),
                                     variable_object= str(object["id_variable"]),
-                                    )
+                                    value_timestamp__gt = str(datetime.datetime.strptime(object["date"], "%Y-%m-%dT%H:%M:%S.%f")-datetime.timedelta(hours=1)))
 
         #Validacion de si hay Flag de alerta en la tabla y si este flag es mayor a 1 hora,
         #de ser mayor a una hora se realiza la actualizacion del Flag con la informacion nueva sino,
         #no se genera la respuesta (res) la cual crea la alerta para el usuario en la tabla de alertas
         if len(p_alert) > 0:
-            #Se convierten las fechas del objeto de entrada y de la ultima alerta reportada en el mismo formato
-            datetime_object = datetime.datetime.strptime(object["date"], "%Y-%m-%dT%H:%M:%S.%f")
-            last_date = datetime.datetime.strptime(p_alert[0]["value_timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
-
-            if bool(p_alert[0]["alert_flag"]) == True and (datetime_object - datetime.timedelta(hours=1)) < last_date:
+            if bool(p_alert[0]["alert_flag"]) == True:
                 res = True
         else:
             res = False
@@ -293,19 +283,21 @@ class DataHandler(object):
         #Validación de bsuqueda de Flag en la base de datos, para saber si la alerta tiene más de 1 hora
         #NOTA: Dado que las variables medioambientales no cambiar de forma subita, se realiza esta validacion
         #para no generar multiples alertas sobre el mismo comportamiento en el cultivo
-        if (self.searchSensor(self.sensor) == False):
+        search_data = self.searchSensor(self.sensor)
+        if (search_data == False):
+            print "Entra con flag en:  " + str(search_data)
 
             #Se genera alerta para guardar en base de datos con los valores entregados por el mensaje MQTT
             Alert(alert_type=alert_type, data=str(str(object["data"])), 
                      description= des,
-                     terrain_object= str(Sensor.objects(id=str(object["sensor"]))[0].terrain_object), 
+                     terrain_object= str(Sensor.objects(id=str(object["sensor"]))[0].terrain_object.id), 
                      sensor_object =str(object["sensor"]), 
                      variable_object= str(variable.id),
                      value_timestamp=str(object["date"])).save()
 
 
 #-------------------------------------------MQTT Methods Handler---------------------------------------------------------
-mqtt.subscribe("System/Sensors/#")
+#mqtt.subscribe("System/Sensors/#")
 
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
