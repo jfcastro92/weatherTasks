@@ -32,8 +32,6 @@ with open("app/credentials.txt", "r") as cred:
 
 app = Flask(__name__)
 
-print connection_data
-
 #--------------------------CONFIGURACION DE PARAMETROS DE CONEXION MONGODB Y MQTT----------------------------------
 #Se realiza la configuración de la base de datos en donde el aplicativo weatherTasks va a almacenar los datos del
 #terreno y todos los mensajes de variables ambientales que se reporten mediante el broker de transmision MQTT.
@@ -227,14 +225,14 @@ class DataHandler(object):
                                     variable_object= str(object["id_variable"]),
                                     )
 
-        #Se convierten las fechas del objeto de entrada y de la ultima alerta reportada en el mismo formato
-        datetime_object = datetime.datetime.strptime(object["date"], "%Y-%m-%dT%H:%M:%S.%f")
-        last_date = datetime.datetime.strptime(p_alert[0]["value_timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
-
         #Validacion de si hay Flag de alerta en la tabla y si este flag es mayor a 1 hora,
         #de ser mayor a una hora se realiza la actualizacion del Flag con la informacion nueva sino,
         #no se genera la respuesta (res) la cual crea la alerta para el usuario en la tabla de alertas
         if len(p_alert) > 0:
+            #Se convierten las fechas del objeto de entrada y de la ultima alerta reportada en el mismo formato
+            datetime_object = datetime.datetime.strptime(object["date"], "%Y-%m-%dT%H:%M:%S.%f")
+            last_date = datetime.datetime.strptime(p_alert[0]["value_timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
+
             if bool(p_alert[0]["alert_flag"]) == True and (datetime_object - datetime.timedelta(hours=1)) < last_date:
                 res = True
         else:
@@ -264,7 +262,7 @@ class DataHandler(object):
         self.sensor["date"] = str(object["date"])
         self.sensor["id_variable"] = str(object["variable"])
 
-        self.alertsMatch(self.sensor)
+        #self.alertsMatch(self.sensor)
 
         #Validacion del valor para generar warning de minimo valor reportado
         if float(object["data"]) <= float(variable.min_value) and float(object["data"]) > float(variable.alert_min):

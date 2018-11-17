@@ -10,6 +10,7 @@ from app import db
 import datetime
 from mongoengine import *
 
+#Definicion de coleccion para Terrenos
 class Terrain(db.Document):
     name = db.StringField(max_length=30, required=True)
     description = db.StringField(max_length=50, required=False)
@@ -19,7 +20,7 @@ class Terrain(db.Document):
     lon = db.FloatField(required=True)
 
 
-#Variables Data Collection Definitions
+#Definicion de coleccion para Variables
 class Variable(db.Document):
     name = db.StringField(max_length=30, required=True)
     min_value = db.FloatField()
@@ -28,7 +29,7 @@ class Variable(db.Document):
     alert_min = db.FloatField()
     unit = db.StringField(max_length=5, required=True)
 
-#SystemParameter Data Collection Definitions
+#Definicion de coleccion para Parametros del sistema
 class SystemParameter(db.Document):
     name = db.StringField(max_length=30, required=True)
     email = db.StringField(max_length=30, required=True)
@@ -36,26 +37,26 @@ class SystemParameter(db.Document):
     default = db.StringField(max_length=1, required=True)
 
 
-#Sensor Data Collection Definitions
+#Definicion de coleccion para Sensores
 class Sensor(db.Document):
     name = db.StringField(max_length=30, required=True, unique=True)
     description = db.StringField(max_length=50, required=False)
     state = db.BooleanField(default=False, required=False)
     terrain_object = db.ReferenceField(Terrain)
 
-#Sensor - Variables Data collection relations
+#Definicion de coleccion para relacion Sensor - Variable
 class SensorVariable(db.Document):
     id_sensor = db.ReferenceField(Sensor)
     id_variable = db.ReferenceField(Variable)
 
-#Data Collection Definitions
+#Definicion de coleccion para Data de sensores
 class Data(db.Document):
     sensor_object = db.ReferenceField(Sensor)
     variable_type = db.ReferenceField(Variable)
     data = db.FloatField(required=True)
     value_timestamp = db.StringField(max_length=100)
 
-#WeatherData Data Collection Definitions
+#Definicion de coleccion para datos de pronostico climatico
 class WeatherData(db.Document):
     temp = db.FloatField(required=True)
     temp_min = db.FloatField(required=True)
@@ -68,7 +69,7 @@ class WeatherData(db.Document):
     wind = db.FloatField(required=True)
     dt_txt = db.DateTimeField()
 
-#Alert Data Collection Definitions
+#Definicion de coleccion para Alertas
 class Alert(db.Document):
     alert_type = db.StringField(max_length=30, required=True)
     data = db.FloatField(required=True)
@@ -78,6 +79,7 @@ class Alert(db.Document):
     variable_object = db.ReferenceField(Variable)
     value_timestamp = db.StringField(max_length=100)
 
+#Definicion de coleccion para control de Alertas
 class AlertFlag(db.Document):
     sensor_object = db.ReferenceField(Sensor)
     variable_object = db.ReferenceField(Variable)
