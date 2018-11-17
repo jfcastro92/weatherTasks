@@ -12,7 +12,7 @@ import requests
 
 from flask import url_for, redirect, render_template, flash, g, session
 from app import app
-from forms import ExampleForm, LoginForm
+#from forms import ExampleForm, LoginForm
 from flask import jsonify
 from flask import request
 from flask_pymongo import PyMongo
