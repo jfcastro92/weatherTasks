@@ -4,13 +4,14 @@ import paho.mqtt.client as mqtt
 import random, threading, json
 from datetime import datetime
 import time
+import sys, errno
 
 #====================================================
 # MQTT Settings 
-MQTT_Broker = "localhost"
-MQTT_Port = 1883
-MQTT_User = ""
-MQTT_Pwd = ""
+MQTT_Broker = "162.243.173.22"
+MQTT_Port = 8883
+MQTT_User = "weathertasks"
+MQTT_Pwd = "wtasks2018Admin"
 Keep_Alive_Interval = 5
 
 
@@ -51,7 +52,7 @@ def publish_To_Topic(topic, message):
 
 def publish_Fake_Sensor_Values_to_MQTT(sensor, toggle):
 	
-	while True:
+	while True:	
 		if toggle == "hum":
 			#Generacion de dato de humedad
 			Humidity_Fake_Value = float("{0:.1f}".format(random.uniform(50, 100)))
