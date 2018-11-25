@@ -68,7 +68,7 @@ def crossdomain(origin=None, methods=None, headers=None, max_age=21600, attach_t
     return decorator
 
 
-@app.route('/things', methods=['GET'])
+@app.route('/things/', methods=['GET'])
 @crossdomain(origin='*')
 def get_all_terrains():
   output = []
@@ -80,7 +80,7 @@ def get_all_terrains():
     'alertas': Alert.objects(value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))).count()})
   return jsonify({'result' : output})
 
-@app.route('/terrainsget', methods=['GET'])
+@app.route('/terrainsget/', methods=['GET'])
 @crossdomain(origin='*')
 def get_all_terrain():
   data = []
@@ -113,13 +113,12 @@ def get_all_terrain():
   return jsonify({'result' : data})
 
 
-@app.route('/alertsget', methods=['GET'])
+@app.route('/alertsget/', methods=['GET'])
 @crossdomain(origin='*')
 def get_all_alerts():
 
   data = []
-  #value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))
-  for alert in Alert.objects():#value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))):
+  for alert in Alert.objects(value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))):
     output = {}
     s_data = {}
     t_data = {}
@@ -150,7 +149,7 @@ def get_all_alerts():
 
   return jsonify({'result' : data})
 
-@app.route('/terrain_create', methods=['POST'])
+@app.route('/terrain_create/', methods=['POST'])
 @crossdomain(origin='*')
 def add_terrain():
   terrain = Terrain
@@ -161,7 +160,7 @@ def add_terrain():
   output = {'CREATED' : t_id['name'], 'height' : t_id['height'], 'width' : t_id['width']}
   return jsonify({'result' : output})
 
-@app.route('/getsensordata', methods=['POST'])
+@app.route('/getsensordata/', methods=['POST'])
 @crossdomain(origin='*')
 def sensorvariable():
   input_data = request.get_json()
@@ -190,12 +189,12 @@ def sensorvariable():
   data.append(s_data)
   return jsonify({'result' : data})
 
-@app.route('/getsdata', methods=['POST'])
+@app.route('/getsdata/', methods=['POST'])
 @crossdomain(origin='*')
 def sensordata():
   input_data = request.get_json()
-  print input_data['id_sensor']
-  return jsonify({'result' : Data.objects(sensor_object = input_data['id_sensor']).order_by('value_timestamp').first()})
+  print input_data['num']
+  return jsonify({'result' : Data.objects(sensor_object = input_data['id_sensor'], variable_type=input_data['id_variable'])[:int(input_data['num'])].order_by('-value_timestamp')})
 
 @app.route('/sensoralert', methods=['POST'])
 @crossdomain(origin='*')

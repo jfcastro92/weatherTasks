@@ -25,10 +25,10 @@ from flask_mqtt import Mqtt
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '../../')))
 
 #Archivo de configuracion de parametros del aplicativo WEATHERTASKS
-with open("app/credentials.txt", "r") as cred:
-    connection_data = []
-    for line in cred:
-        connection_data.append(line.rstrip('\n'))
+# with open("app/credentials.txt", "r") as cred:
+#     connection_data = []
+#     for line in cred:
+#         connection_data.append(line.rstrip('\n'))
 
 app = Flask(__name__)
 
@@ -39,9 +39,9 @@ app.config.update(
     DEBUG = True,
     TESTING = True,
     MONGODB_SETTINGS = {
-        'HOST': connection_data[0],
-        'PORT': int(connection_data[1]),
-        'DB': connection_data[2],
+        'HOST': 'localhost',
+        'PORT': 27017,
+        'DB': 'weatherTasks',
         'TZ_AWARE': False,
     },
 )
@@ -49,10 +49,10 @@ app.config.update(
 #Se realiza la definicion de la conexion con el broker MQTT, el cual usa MOSQUITTO MQTT para realizar todo el proceso
 #de publicacion o suscripcion a los mensajes entre los componentes del sistema (M2M).
 
-app.config['MQTT_BROKER_URL'] = connection_data[3]  # IP donde esta el servicio de Broker MQTT
-app.config['MQTT_BROKER_PORT'] = int(connection_data[4])  # Puerto conexion al borker MQTT
-app.config['MQTT_USERNAME'] = connection_data[5]  # Username de conexion al broker
-app.config['MQTT_PASSWORD'] = connection_data[6]  # Password de conexion al broker
+app.config['MQTT_BROKER_URL'] =  '162.243.173.22' # IP donde esta el servicio de Broker MQTT
+app.config['MQTT_BROKER_PORT'] = 1883  # Puerto conexion al borker MQTT
+app.config['MQTT_USERNAME'] = 'weathertasks' # Username de conexion al broker
+app.config['MQTT_PASSWORD'] = 'wtasks2018Admin'  # Password de conexion al broker
 app.config['MQTT_KEEPALIVE'] = 45  # Intervalo de tiempo de envio de PING al broker
 app.config['MQTT_TLS_ENABLED'] = False  # Parametro de seguridad SSL para cifrado de los datos
 
@@ -302,6 +302,10 @@ class DataHandler(object):
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
     print('on_connect client : {} userdata :{} flags :{} rc:{}'.format(client, userdata, flags, rc))
+
+@mqtt.on_disconnect()
+def handle_disconnect(client, userdata, rc):
+    print('on_disconnect client : {} userdata :{} rc :{}'.format(client, userdata, rc))
 
 
 @mqtt.on_subscribe()
