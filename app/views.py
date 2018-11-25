@@ -189,7 +189,7 @@ def sensorvariable():
   data.append(s_data)
   return jsonify({'result' : data})
 
-@app.route('/getsdata/', methods=['POST'])
+@app.route('/getsdata/', methods=['GET','POST'])
 @crossdomain(origin='*')
 def sensordata():
   input_data = request.get_json()
