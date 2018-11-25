@@ -46,6 +46,7 @@ app.config.update(
     },
 )
 
+
 #Se realiza la definicion de la conexion con el broker MQTT, el cual usa MOSQUITTO MQTT para realizar todo el proceso
 #de publicacion o suscripcion a los mensajes entre los componentes del sistema (M2M).
 
@@ -61,6 +62,7 @@ app.config['MQTT_TLS_ENABLED'] = False  # Parametro de seguridad SSL para cifrad
 #como MongoEngine, Mqtt y MongoRest las cuales crean un contexto de aplicacion que da lugar a manejar los datos de
 #WEATHERTASKS a nivel de paso de mensajes MQTT, Manejador de colecciones de base de datos MONGODB e interfaces de
 #servicios web REST para interactuar con los modelos definidos para el aplicativo.
+
 db = MongoEngine(app)
 api = MongoRest(app)
 mqtt = Mqtt(app)
