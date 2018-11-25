@@ -149,7 +149,7 @@ def get_all_alerts():
 
   return jsonify({'result' : data})
 
-@app.route('/terrain_create/', methods=['POST'])
+@app.route('/terrain_create/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
 def add_terrain():
   terrain = Terrain
@@ -160,7 +160,7 @@ def add_terrain():
   output = {'CREATED' : t_id['name'], 'height' : t_id['height'], 'width' : t_id['width']}
   return jsonify({'result' : output})
 
-@app.route('/getsensordata/', methods=['POST'])
+@app.route('/getsensordata/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
 def sensorvariable():
   input_data = request.get_json()
@@ -196,12 +196,31 @@ def sensordata():
   print input_data['num']
   return jsonify({'result' : Data.objects(sensor_object = input_data['id_sensor'], variable_type=input_data['id_variable'])[:int(input_data['num'])].order_by('-value_timestamp')})
 
-@app.route('/sensoralert', methods=['POST'])
+@app.route('/sensoralert/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
 def sensorAlerts():
   input_data = request.get_json()
   print input_data['id_sensor']
   return jsonify({'result' : Alert.objects(sensor_object = input_data['id_sensor']).order_by('value_timestamp')})#value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))):
+
+@app.route('/sensorvariables/', methods=['GET','POST','OPTIONS'])
+@crossdomain(origin='*')
+def sensorVariables():
+  input_data = request.get_json()
+  print input_data['id_sensor']
+  variables = []
+  for sensorvariable in SensorVariable.objects(id_sensor = input_data['id_sensor']): 
+      for variable in Variable.objects():
+        if str(variable.id) == str(sensorvariable.id_variable.id):
+          v_data = {}
+          v_data['name'] = str(variable.name)
+          v_data['unit'] = str(variable.unit)
+          v_data['min_value'] = str(variable.min_value)
+          v_data['max_value'] = str(variable.max_value)
+          v_data['alert_min'] = str(variable.alert_min)
+          v_data['alert_max'] = str(variable.alert_max)
+          variables.append(v_data)
+  return jsonify({"result": variables})
 
 
 @app.route('/')
