@@ -213,6 +213,7 @@ def sensorVariables():
       for variable in Variable.objects():
         if str(variable.id) == str(sensorvariable.id_variable.id):
           v_data = {}
+          v_data['id'] = str(variable.id)
           v_data['name'] = str(variable.name)
           v_data['unit'] = str(variable.unit)
           v_data['min_value'] = str(variable.min_value)
