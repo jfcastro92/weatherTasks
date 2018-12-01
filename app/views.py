@@ -160,6 +160,19 @@ def add_terrain():
   output = {'CREATED' : t_id['name'], 'height' : t_id['height'], 'width' : t_id['width']}
   return jsonify({'result' : output})
 
+@app.route('/sensor_create/', methods=['GET','POST','OPTIONS'])
+@crossdomain(origin='*')
+def sensor_create():
+  input_data = request.get_json()
+  newSensor = Sensor.objects.create(name=input_data["name"],description=input_data["description"],
+                                state="True",terrain_object=input_data["terrain_object"])
+
+  for i in input_data["variable"]:
+    print SensorVariable.objects.create(id_sensor=newSensor.id, id_variable=str(i))
+
+  output = {'CREATED' : newSensor}
+  return jsonify(output)
+
 @app.route('/getsensordata/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
 def sensorvariable():
