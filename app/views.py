@@ -207,14 +207,14 @@ def sensorvariable():
 def sensordata():
   input_data = request.get_json()
   print input_data['num']
-  return jsonify({'result' : Data.objects(sensor_object = input_data['id_sensor'], variable_type=input_data['id_variable'])[:int(input_data['num'])].order_by('value_timestamp')})
+  return jsonify({'result' : Data.objects(sensor_object = input_data['id_sensor'], variable_type=input_data['id_variable'], value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(hours=1)))[:int(input_data['num'])].order_by('value_timestamp')})
 
 @app.route('/sensoralert/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
 def sensorAlerts():
   input_data = request.get_json()
   print input_data['id_sensor']
-  return jsonify({'result' : Alert.objects(sensor_object = input_data['id_sensor']).order_by('value_timestamp')})#value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))):
+  return jsonify({'result' : Alert.objects(sensor_object = input_data['id_sensor'],value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))).order_by('value_timestamp')})
 
 @app.route('/sensorvariables/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
