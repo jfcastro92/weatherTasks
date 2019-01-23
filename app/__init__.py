@@ -299,7 +299,7 @@ class DataHandler(object):
 
 
 #-------------------------------------------MQTT Methods Handler---------------------------------------------------------
-#mqtt.subscribe("System/Sensors/#")
+mqtt.subscribe("System/Sensors/#")
 
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
