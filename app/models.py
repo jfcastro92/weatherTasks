@@ -39,7 +39,7 @@ class SystemParameter(db.Document):
 
 #Definicion de coleccion para Sensores
 class Sensor(db.Document):
-    name = db.StringField(max_length=30, required=True, unique=True)
+    name = db.StringField(max_length=30, required=True)
     description = db.StringField(max_length=50, required=False)
     state = db.BooleanField(default=False, required=False)
     terrain_object = db.ReferenceField(Terrain)
