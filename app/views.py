@@ -168,10 +168,10 @@ def sensor_create():
                                 state="True",terrain_object=input_data["terrain_object"])
 
   for i in input_data["variable"]:
-    print SensorVariable.objects.create(id_sensor=newSensor.id, id_variable=str(i))
+    SensorVariable.objects.create(id_sensor=newSensor.id, id_variable=str(i))
 
   output = {'CREATED' : newSensor}
-  return jsonify(output)
+  return jsonify({'result' : output})
 
 @app.route('/getsensordata/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
