@@ -216,13 +216,14 @@ def sensorAlerts():
   print input_data['id_sensor']
   return jsonify({'result' : Alert.objects(sensor_object = input_data['id_sensor'],value_timestamp__gt = str(datetime.datetime.now()-datetime.timedelta(days=1))).order_by('value_timestamp')})
 
-@app.route('/sensorvariable/', methods=['GET','POST','OPTIONS'])
+
+@app.route('/getvariables/', methods=['GET','POST','OPTIONS'])
 @crossdomain(origin='*')
-def sensorVariable():
+def getVariables():
   input_data = request.get_json()
   print input_data['id_sensor']
   variables = []
-  for sensorvariable in SensorVariable.objects(id_sensor = input_data['id_sensor']): 
+  for sensorvariable in SensorVariable.objects(id_sensor = input_data['id_sensor']):
       for variable in Variable.objects():
         if str(variable.id) == str(sensorvariable.id_variable.id):
           v_data = {}
