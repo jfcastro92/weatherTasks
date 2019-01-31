@@ -73,7 +73,7 @@ class WeatherData(db.Document):
 class Alert(db.Document):
     alert_type = db.StringField(max_length=30, required=True)
     data = db.FloatField(required=True)
-    description = db.StringField(max_length=100)
+    description = db.StringField(max_length=1000)
     terrain_object = db.ReferenceField(Terrain)
     sensor_object = db.ReferenceField(Sensor)
     variable_object = db.ReferenceField(Variable)
