@@ -54,7 +54,7 @@ app.config['MQTT_BROKER_URL'] =  '162.243.173.22' # IP donde esta el servicio de
 app.config['MQTT_BROKER_PORT'] = 1883  # Puerto conexion al borker MQTT
 app.config['MQTT_USERNAME'] = 'weathertasks' # Username de conexion al broker
 app.config['MQTT_PASSWORD'] = 'wtasks2018Admin'  # Password de conexion al broker
-app.config['MQTT_KEEPALIVE'] = 45  # Intervalo de tiempo de envio de PING al broker
+app.config['MQTT_KEEPALIVE'] = 90  # Intervalo de tiempo de envio de PING al broker
 app.config['MQTT_TLS_ENABLED'] = False  # Parametro de seguridad SSL para cifrado de los datos
 
 #-------------------------------------INSTANCIACION DE LOS MODULOS WEATHERTASKS-------------------------------------
@@ -216,6 +216,7 @@ def handle_mqtt_message(client, userdata, message):
     mqtt_data = json.loads(message.payload)
     data = dict(
        sensor=mqtt_data["Sensor_ID"],
+       terrain = mqtt_data["Terrain_ID"],
        data=mqtt_data["Value"],
        variable = mqtt_data["Variable_ID"],
        date = mqtt_data["Date"]

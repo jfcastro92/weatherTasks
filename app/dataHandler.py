@@ -3,7 +3,8 @@ from app.models import *
 import requests
 import json
 import time
-import collections
+from collections import Counter
+import operator
 
 #-----------------------------Clase controladora de alertas para cada mensaje MQTT----------------------------------
 class DataHandler(object):
@@ -23,16 +24,19 @@ class DataHandler(object):
     def alertsMatch(self, object):
 
         #LLAMADO A LA API QUE TRAE INFORMACION DEL CLIMA DE CADA TRES HORA DURANTE LOS SIGUIENTES 5 DIAS
-        forecast = requests.get('http://api.openweathermap.org/data/2.5/forecast?q=Cali,co&units=metric&lang=es&APPID=01afdd8f67ab3efb6af3db388dfe4a01')
+        #DE ACUERDO A LA UBICACION DEL TERRENO
+        terrainData = Terrain.objects(id=str(object["id_terrain"]))
+
+        forecast = requests.get('https://api.openweathermap.org/data/2.5/forecast?lat='+ str(terrainData[0]["lat"]) +'&lon='+ str(terrainData[0]["lon"]) +'&lang=es&APPID=01afdd8f67ab3efb6af3db388dfe4a01')
         data_f = forecast.json()
-        data = {}
+        weather = []
 
         for i in data_f["list"]:
-            data = {
-             "main" : str(i["weather"][0]["main"]), 
-             "description" : str(i["weather"][0]["description"])}
+            weather.append(str(i["weather"][0]["description"]))
 
-        return data["description"]
+        data_w = max(dict(Counter(weather)).iteritems(), key=operator.itemgetter(1))[0] 
+
+        return str(data_w)
 
     #Metodo de busqueda y determinacion si la alerta es en la misma hora
     #Inputs: Objeto(id_sensor ,id_variable, date, value)
@@ -48,8 +52,7 @@ class DataHandler(object):
         #de ser mayor a una hora se realiza la actualizacion del Flag con la informacion nueva sino,
         #no se genera la respuesta (res) la cual crea la alerta para el usuario en la tabla de alertas
         if len(p_alert) > 0:
-            if bool(p_alert[0]["alert_flag"]) == True:
-                res = True
+            res = True
         else:
             res = False
             AlertFlag(sensor_object=object["id_sensor"],variable_object=object["id_variable"],
@@ -77,6 +80,8 @@ class DataHandler(object):
         self.sensor["value"] = str(object["data"])
         self.sensor["date"] = str(object["date"])
         self.sensor["id_variable"] = str(object["variable"])
+        self.sensor["id_terrain"] = str(object["terrain"])
+
 
 
         #Validacion del valor para generar warning de minimo valor reportado
@@ -100,7 +105,7 @@ class DataHandler(object):
         #Validacion del valor para generar danger de maximo valor reportado
         elif float(object["data"]) >= float(variable.alert_max):
             print "Alerta danger alert_max"
-            des = "El sensor esta reportando valores por encima de los limites en la variable"+ str(variable.name)
+            des = "El sensor esta reportando valores por encima de los limites en la variable "+ str(variable.name)
             alert_type = "danger"
         else:
             alert = False
@@ -109,19 +114,21 @@ class DataHandler(object):
         #Validacion de bsuqueda de Flag en la base de datos, para saber si la alerta tiene mas de 1 hora
         #NOTA: Dado que las variables medioambientales no cambiar de forma subita, se realiza esta validacion
         #para no generar multiples alertas sobre el mismo comportamiento en el cultivo
-        search_data = self.searchSensor(self.sensor)
 
-        if (search_data == False and alert== True):
-            print "Entra con flag en:  " + str(search_data)
+        print "Flag de alerta: "+ str(alert)
+        if (alert == True):
+            search_data = self.searchSensor(self.sensor)
+            if (search_data == False):
+                print "Entra con flag en:  " + str(search_data)
 
-            forecast_data = self.alertsMatch(self.sensor)
+                forecast_data = self.alertsMatch(self.sensor)
 
-            description = des + ", clima para los proximas 24 horas es de " + forecast_data
+                description = des + ", el clima para clima para los proximo dia es de " + str(forecast_data)
 
-            #Se genera alerta para guardar en base de datos con los valores entregados por el mensaje MQTT
-            Alert(alert_type=alert_type, data=str(str(object["data"])), 
-                     description= description,
-                     terrain_object= str(Sensor.objects(id=str(object["sensor"]))[0].terrain_object.id), 
-                     sensor_object =str(object["sensor"]), 
-                     variable_object= str(variable.id),
-                     value_timestamp=str(object["date"])).save()
+                #Se genera alerta para guardar en base de datos con los valores entregados por el mensaje MQTT
+                Alert(alert_type=alert_type, data=str(str(object["data"])), 
+                         description= description,
+                         terrain_object= str(Sensor.objects(id=str(object["sensor"]))[0].terrain_object.id), 
+                         sensor_object =str(object["sensor"]), 
+                         variable_object= str(variable.id),
+                         value_timestamp=str(object["date"])).save()
