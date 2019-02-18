@@ -123,7 +123,7 @@ class DataHandler(object):
 
                 forecast_data = self.alertsMatch(self.sensor)
 
-                description = des + ", el clima para clima para los proximo dia es de " + str(forecast_data)
+                description = des + ", el clima para el proximo dia es de " + str(forecast_data)
 
                 #Se genera alerta para guardar en base de datos con los valores entregados por el mensaje MQTT
                 Alert(alert_type=alert_type, data=str(str(object["data"])), 
